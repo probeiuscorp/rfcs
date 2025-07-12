@@ -65,6 +65,8 @@ what I believe is particularly powerful about it is **its ability to change over
 If some code depends on a Context, that Context can later be rewritten in terms of other Contexts.
 **The consumption is isolated from the production**: the producers can change without necessitating the consumers read new Contexts.
 
+As an added bonus over wrapping `useContext`, derived Contexts could be used conditionally by `use`.
+
 # Detailed design
 
 Types would be changed like so:
@@ -166,13 +168,13 @@ TODO: I cannot say how complicated it is, but I would think this to not be overl
 
 # Alternatives
 
-Unfortunately Applicative Functors are fairly more awkward in JavaScript than they are in Haskell (Haskell curries by default, where JS doesn't).
+## Alternatives of this proposal
 
-This feature competes with `useContextSelector`, where giving both as primitives 
+Unfortunately Applicative Functors are fairly more awkward in JavaScript than they are in Haskell (Haskell curries by default, where JS doesn't).
 
 The Applicative Functor interface could be made available in some other forms instead:
 
-## Via liftA2
+### Via liftA2
 
 Instead of a type like `.apply`'s:
 
@@ -196,7 +198,7 @@ I didn't want to open the RFC with this, as Applicative Functors are instead usu
 I don't love the name `.with` either.
 For reference in Haskell `.with` is called `liftA2`.
 
-## Via sequence
+### Via sequence
 
 Promises are also valid Applicative Functors. While `.then` does have all the power of `.apply` (and then some), there is a particularly Applicative-y util for Promises: `Promise.all` (_handling of TypeScript tuples omitted for brevity_):
 
@@ -218,7 +220,30 @@ However, there are a number of reasons this interface isn't that great:
 
 However, I figured mentioning `Promise` would be useful for precedence.
 
+## Alternatives to this proposal
+
+### Wrapping `useContext`
+
+As already noted, a custom hook wrapping `useContext` can no longer be called conditionally like `use` can.
+Additionally, wrapping `useContext` will always be subscribed to any change, where derived Contexts will stop repeat pushes.
+
+However, a custom hook wrapper has a lot of power as the code using it evolves over time.
+It can be made to accept arguments, or at some point switch to actively procuring the data.
+
+### [useContextSelector](https://github.com/reactjs/rfcs/pull/119)
+
+At an API level, this proposal competes with `useContextSelector` the most.
+In those terms, I think derived Contexts are the better first option:
+- `useContextSelector` can be defined in terms of derived Contexts, both in user-land and in React itself
+- Derived contexts greatly increase the expressiveness of Context as a tool of composition, not just for state management
+- No ambiguity about identity ("do I need to useMemo the selector?"): users expect `.map` to change identity
+
+However, at the performance level, derived Contexts might be able to be made performant enough to satisfy `useContextSelector`'s use cases.
+Then its more universal applicability could justify adding this as a solution for those cases.
+
 # Adoption strategy
+
+No existing APIs are modified so it is opt-in only.
 
 A codemod for TypeScript users _could_ be made to convert existing explicit type annotations of `Context<T>`'s to `WritableContext<T>`.
 Beyond that, everything should Just Work.
