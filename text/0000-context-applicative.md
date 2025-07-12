@@ -7,10 +7,12 @@
 Selectors for Context are an in-demand feature, but with a slightly different interface, can be made much more universally useful
 ([.slice as proposed here is similar](https://github.com/reactjs/rfcs/pull/119#issuecomment-512529871])).
 
-Following from functional programming techniques, this RFC proposes adding these methods to Context:
+Following from functional programming techniques, this RFC proposes adding:
+- a `ReadonlyContext<T>` type which is like `Context<T>` but without `.Provider`
 
-- `.map`, of type: `<T, U>(this: Context<T>, fn: (data: T) => U) => Context<U>`
-- `.apply`, of type: `<T, U>(this: Context<T>, fn: Context<(data: T) => U>) => Context<U>` (_I actually recommend one of its alternatives_)
+and these methods to Context:
+- `.map`, of type: `<T, U>(this: ReadonlyContext<T>, fn: (data: T) => U) => ReadonlyContext<U>`
+- `.apply`, of type: `<T, U>(this: ReadonlyContext<T>, fn: Context<(data: T) => U>) => ReadonlyContext<U>` (_I actually recommend one of its alternatives_)
 
 `.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is convered in detail in Motivation.
 
@@ -46,7 +48,7 @@ function Library() {
 
 # Motivation
 
-Motivation for deriving Contexts from other Contexts is already well-established.
+Motivation for selecting Contexts is already well-established by the popularity of [https://github.com/reactjs/rfcs/pull/119](RFC 119).
 
 Motivation for this approach is that these `.map` and `.apply` functions are drawn from the Functor and Applicative Functor (respectively) from Haskell.
 This style of approach is thoroughly treaded ground, being used with great success in Haskell for many years.
@@ -84,11 +86,11 @@ The distinct Contexts returned from these methods do not have a `.Provider`.
 
 `.map` has two guarantees, the first that given:
 ```ts
-type T = // ...
-type U = // ...
-declare function someMapping(data: T): U
-declare function showAsJSX(data: U): ReactNode
-declare const SomeContext: ReadonlyContext<T>
+type T = /* ... */;
+type U = /* ... */;
+declare function someMapping(data: T): U;
+declare function showAsJSX(data: U): ReactNode;
+declare const SomeContext: ReadonlyContext<T>;
 ```
 
 this `SomeComponent`:
@@ -111,24 +113,24 @@ function SomeComponent() {
 The second is that in this snippet, `Child` will never be rerendered (as least by the `useContext`).
 When the map function returns the same as it did for the last push by `Object.is` semantics, the returned Context will not push an update to its subscribers.
 ```ts
-const CountContext = createContext(0)
-const ZeroContext = CountContext.map(() => 0)
+const CountContext = createContext(0);
+const ZeroContext = CountContext.map(() => 0);
 
 function Child() {
-  const zero = useContext(ZeroContext)
-  return <div>{zero}</div>
+  const zero = useContext(ZeroContext);
+  return <div>{zero}</div>;
 }
-const child = <Child />
+const child = <Child />;
 
 function Parent() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
   return (
     <div onClick={() => rerender(n => n + 1)}>
       <CountContext.Provider value={count}>
         {child}
       </CountContext.Provider>
     </div>
-  )
+  );
 }
 ```
 
