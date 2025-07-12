@@ -8,7 +8,7 @@ Selectors for Context are an in-demand feature, but with a slightly different in
 ([.slice as proposed here is similar](https://github.com/reactjs/rfcs/pull/119#issuecomment-512529871])).
 
 Following from functional programming techniques, this RFC proposes adding:
-- a `ReadonlyContext<T>` type which is like `Context<T>` but without `.Provider`
+- a `ReadonlyContext<T>` type which is a supertype of `Context<T>` without `.Provider`
 
 and these methods to Context:
 - `.map`, of type: `<T, U>(this: ReadonlyContext<T>, fn: (data: T) => U) => ReadonlyContext<U>`
