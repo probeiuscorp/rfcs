@@ -99,7 +99,7 @@ declare function showAsJSX(data: U): ReactNode;
 declare const SomeContext: ReadonlyContext<T>;
 ```
 
-this `SomeComponent`:
+Then, this `SomeComponent`:
 ```ts
 const MappedContext = SomeContext.map(someMapping);
 function SomeComponent() {
@@ -131,7 +131,7 @@ const child = <Child />;
 function Parent() {
   const [count, setCount] = useState(0);
   return (
-    <div onClick={() => rerender(n => n + 1)}>
+    <div onClick={() => setCount(n => n + 1)}>
       <CountContext.Provider value={count}>
         {child}
       </CountContext.Provider>
@@ -162,7 +162,7 @@ I also believe the the surface area is satisfying small, with no extra hooks or 
 
 Contexts derived from other Contexts cannot have `.Provider`'s.
 If derived Contexts had been around from day one of Context, I think distinguishing a `WritableContext` type would be more useful than distinguishing a `ReadonlyContext` (as not many places where the types can't be inferred would need to then provide a Context value).
-I would not think a codemod to rewrite current `Context<T>`'s to `WritableContext<T>` would be worth it.
+I would not think a codemod to rewrite current `Context<T>`'s to `WritableContext<T>`'s would be worth it.
 
 However, this only affects TypeScript users, and the vast majority of usages won't have explicit type annotations.
 
@@ -195,7 +195,7 @@ a function called something like `.with` could be exposed:
 Note this is the same as `.map`'ing `other` by `combine` into `(data: T) => R`. Similarly `.apply` could be defined in terms of `.with`.
 
 **I recommend this approach**.
-I think it would be more natural for JavaScript users, and for the typical use of combining two Contexts, only requires creating the output Context,
+I think it would be more natural for JavaScript users, and considering the typical use of combining two Contexts, it only requires creating the output Context,
 where `.apply` requires creating the intermediate Context from `.map`'ing `other`.
 I didn't want to open the RFC with this, as Applicative Functors are instead usually introduced with `.apply`.
 
@@ -219,8 +219,8 @@ This pattern is called `sequence` in Haskell. Exposing a function like:
 would give the same power to users as `.apply`.
 
 However, there are a number of reasons this interface isn't that great:
-- combining more than two or three Contexts in not that common, for which the Array is needless overhead
-- there is no Context namespace, so it would need to be exposed as a plain function from 'react'
+- combining more than two or three Contexts is not that common, for which the Array is needless overhead
+- there is no Context namespace, so it would need to be exposed as a plain function from 'react'. I don't know what'd be a nice name for it.
 
 However, I figured mentioning `Promise` would be useful for precedence.
 
@@ -243,13 +243,13 @@ In those terms, I think derived Contexts are the better first option:
 - No ambiguity about identity ("do I need to useMemo the selector?"): users expect `.map` to change identity
 
 However, at the performance level, derived Contexts might be able to be made performant enough to satisfy `useContextSelector`'s use cases.
-Then its more universal applicability could justify adding this as a solution for those cases.
+Then the more universal applicability of derived Contexts could justify adding (it as) a solution for those cases.
 
 # Adoption strategy
 
 No existing APIs are modified so it is opt-in only.
 
-A codemod for TypeScript users _could_ be made to convert existing explicit type annotations of `Context<T>`'s to `WritableContext<T>`.
+A codemod for TypeScript users _could_ be made to convert existing explicit type annotations of `Context<T>`'s to `WritableContext<T>`'s.
 
 # How we teach this
 
@@ -259,7 +259,7 @@ For the users who stumble upon it while poking around:
 - `.map` is already a familiar name from Array, and
 - they are completely described by their types (not preserving identity is their only non-pure semantic, and that has strong precedence from Array `.map`).
 
-Finding an intuitive name for `.with` would be trickiest part.
+Finding an intuitive name for `.with` would be the trickiest part.
 
 # Unresolved questions
 
