@@ -14,7 +14,7 @@ and these methods to Context:
 - `.map`, of type: `<T, U>(this: ReadonlyContext<T>, fn: (data: T) => U) => ReadonlyContext<U>`
 - `.apply`, of type: `<T, U>(this: ReadonlyContext<T>, fn: ReadonlyContext<(data: T) => U>) => ReadonlyContext<U>` (_I actually recommend one of its alternatives_)
 
-`.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is convered in detail in Motivation.
+`.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is covered in detail in Motivation.
 
 Every call, without respect to the identity of the given argument (function / context of functions), returns a distinct Context.
 To be usable within renders, existing user-land techniques like WeakMap can be used to stabilize the identity of the returned Context to the identity of the given argument.
