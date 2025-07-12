@@ -5,12 +5,12 @@
 # Summary
 
 Selectors for Context are an in-demand feature, but with a slightly different interface, can be made much more universally useful
-[.slice as proposed here is similar](https://github.com/reactjs/rfcs/pull/119#issuecomment-512529871]).
+([.slice as proposed here is similar](https://github.com/reactjs/rfcs/pull/119#issuecomment-512529871])).
 
 Following from functional programming techniques, this RFC proposes adding these methods to Context:
 
-- `.map` to Contexts, of type: `<T, U>(this: Context<T>, fn: (data: T) => U) => Context<U>`
-- `.apply` to Contexts, of type: `<T, U>(this: Context<T>, fn: Context<(data: T) => U>) => Context<U>`
+- `.map`, of type: `<T, U>(this: Context<T>, fn: (data: T) => U) => Context<U>`
+- `.apply`, of type: `<T, U>(this: Context<T>, fn: Context<(data: T) => U>) => Context<U>` (_I actually recommend one of its alternatives_)
 
 `.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is convered in detail in Motivation.
 
@@ -19,17 +19,10 @@ To be usable within renders, existing user-land techniques like WeakMap can be u
 
 # Basic example
 
-If the proposal involves a new or changed API, include a basic code example.
-Omit this section if it's not applicable.
-
 ```js
 // User can set either of these for our API
 const ViewportReadonly = createContext(null);
 const ViewportWritable = createContext(null);
-// Now ViewportRead will grab either, with a preference for ViewportWritable's
-const ViewportRead = ViewportReadonly.apply(ViewportWritable.map((writableViewport) => (readableViewport) => {
-  return writableViewport ?? readabelViewport;
-}));
 
 function IntegrateLibrary({ viewport }) {
   return (
@@ -40,8 +33,12 @@ function IntegrateLibrary({ viewport }) {
   );
 }
 
+// Now ViewportRead will grab either, with a preference for ViewportWritable's
+const ViewportRead = ViewportReadonly.apply(ViewportWritable.map((writableViewport) => (readableViewport) => {
+  return writableViewport ?? readabelViewport;
+}));
 function Library() {
-  // Library will pick up either, 
+  // Library will pick up either 
   const viewport = useContext(ViewportRead);
 }
 ```
@@ -54,7 +51,7 @@ Motivation for deriving Contexts from other Contexts is already well-established
 Motivation for this approach is that these `.map` and `.apply` functions are drawn from the Functor and Applicative Functor (respectively) from Haskell.
 This style of approach is thoroughly treaded ground, being used with great success in Haskell for many years.
 
-To briefly describe the purpose of `.apply` in addition to `.map` (this explanation is no different from the many articles on Functor vs Applicative out in the wild):
+To briefly describe the purpose of `.apply` in addition to `.map` (this explanation is no different from the many articles on Functor vs Applicative Functor out in the wild):
 
 - With just `.map` we can refine one Context into any number of others, which can themselves be refined, creating a tree of ever more specific (and less informative) Contexts.
 
@@ -118,7 +115,7 @@ For reference in Haskell `.with` is called `liftA2`.
 
 ## Via sequence
 
-Promises are also valid Applicative Functors. While .then does have all the power of .apply (and then some), there is a particularly Applicative-y util for Promises: `Promise.all` (_handling of TypeScript tuples omitted for brevity_):
+Promises are also valid Applicative Functors. While `.then` does have all the power of `.apply` (and then some), there is a particularly Applicative-y util for Promises: `Promise.all` (_handling of TypeScript tuples omitted for brevity_):
 
 ```ts
 <T>(promises: Array<Promise<T>>): Promise<Array<T>>
