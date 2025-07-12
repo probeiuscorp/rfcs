@@ -65,11 +65,78 @@ If some code depends on a Context, that Context can later be rewritten in terms 
 
 # Detailed design
 
-This is the bulk of the RFC. Explain the design in enough detail for somebody
-familiar with React to understand, and for somebody familiar with the
-implementation to implement. This should get into specifics and corner-cases,
-and include examples of how the feature is used. Any new terminology should be
-defined here.
+Types would be changed like so:
+
+```ts
+interface ReadonlyContext<T> {
+  Consumer: Consumer<T>;
+  displayName?: string | undefined;
+}
+interface Context<T> extends ReadonlyContext<T> {
+  Provider: Provider<T>;
+}
+```
+
+## Semantics
+
+Contexts from `createContext` now have two prototype methods, `.map` and `.apply` (or `.with`).
+The distinct Contexts returned from these methods do not have a `.Provider`.
+
+`.map` has two guarantees, the first that given:
+```ts
+type T = // ...
+type U = // ...
+declare function someMapping(data: T): U
+declare function showAsJSX(data: U): ReactNode
+declare const SomeContext: ReadonlyContext<T>
+```
+
+this `SomeComponent`:
+```ts
+const MappedContext = SomeContext.map(someMapping);
+function SomeComponent() {
+  const data = useContext(MappedContext);
+  return showAsJSX(data);
+}
+```
+
+will always render the same as this `SomeComponent`:
+```ts
+function SomeComponent() {
+  const data = someMapping(useContext(SomeContext));
+  return showAsJSX(data);
+}
+```
+
+The second is that in this snippet, `Child` will never be rerendered (as least by the `useContext`).
+When the map function returns the same as it did for the last push by `Object.is` semantics, the returned Context will not push an update to its subscribers.
+```ts
+const CountContext = createContext(0)
+const ZeroContext = CountContext.map(() => 0)
+
+function Child() {
+  const zero = useContext(ZeroContext)
+  return <div>{zero}</div>
+}
+const child = <Child />
+
+function Parent() {
+  const [count, setCount] = useState(0)
+  return (
+    <div onClick={() => rerender(n => n + 1)}>
+      <CountContext.Provider value={count}>
+        {child}
+      </CountContext.Provider>
+    </div>
+  )
+}
+```
+
+`.apply` has similar semantics with render equivalence and not pushing updates on the same value.
+
+## Implementation
+
+TODO: How is this implemented?
 
 # Drawbacks
 
@@ -168,3 +235,4 @@ Finding an intuitive name for `.with` would be trickiest part.
 
 - `Context<T>` + `ReadonlyContext<T>` vs `WritableContext<T>` + `Context<T>`
 - Implementation complexity and performance of derivation
+- Could default displayName of derived Contexts from input Context displayName's and the function names.
