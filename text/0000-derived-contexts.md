@@ -37,8 +37,12 @@ function IntegrateLibrary({ viewport }) {
 
 // Now ViewportRead will grab either, with a preference for ViewportWritable's
 const ViewportRead = ViewportReadonly.apply(ViewportWritable.map((writableViewport) => (readableViewport) => {
-  return writableViewport ?? readabelViewport;
+  return writableViewport ?? readableViewport;
 }));
+// or using .with:
+const ViewportRead = ViewportWritable.with(ViewportReadonly, (writableViewport, readableViewport) => {
+  return writableViewport ?? readableViewport;
+});
 function Library() {
   // Library will pick up either 
   const viewport = useContext(ViewportRead);
