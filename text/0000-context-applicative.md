@@ -4,15 +4,18 @@
 
 # Summary
 
-Selectors for Context are an in-demand feature, but with a slightly different interface, can be made much more universally useful.
+Selectors for Context are an in-demand feature, but with a slightly different interface, can be made much more universally useful
+[.slice as proposed here is similar](https://github.com/reactjs/rfcs/pull/119#issuecomment-512529871]).
 
-Following from functional programming techniques, this RFC proposes adding a:
+Following from functional programming techniques, this RFC proposes adding these methods to Context:
 
-- .map to Contexts, of type: `<T, U>(this: Context<T>, fn: (data: T) => U) => Context<U>`
-- .apply to Contexts, of type: `<T, U>(this: Context<T>, fn: Context<(data: T) => U>) => Context<U>`
+- `.map` to Contexts, of type: `<T, U>(this: Context<T>, fn: (data: T) => U) => Context<U>`
+- `.apply` to Contexts, of type: `<T, U>(this: Context<T>, fn: Context<(data: T) => U>) => Context<U>`
 
-Every call, without respect to the identity of the given argument (function / context of functions), returns a distinct context.
-To be usable within renders, existing user-land techniques like WeakMap can be used to stabilize the identity of the returned context to the identity of the given argument.
+`.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is convered in detail in Motivation.
+
+Every call, without respect to the identity of the given argument (function / context of functions), returns a distinct Context.
+To be usable within renders, existing user-land techniques like WeakMap can be used to stabilize the identity of the returned Context to the identity of the given argument.
 
 # Basic example
 
@@ -24,7 +27,9 @@ Omit this section if it's not applicable.
 const ViewportReadonly = createContext(null);
 const ViewportWritable = createContext(null);
 // Now ViewportRead will grab either, with a preference for ViewportWritable's
-const ViewportRead = ViewportReadonly.apply(ViewportWritable.map((writableViewport) => (readableViewport) => writableViewport ?? readabelViewport));
+const ViewportRead = ViewportReadonly.apply(ViewportWritable.map((writableViewport) => (readableViewport) => {
+  return writableViewport ?? readabelViewport;
+}));
 
 function IntegrateLibrary({ viewport }) {
   return (
@@ -46,20 +51,20 @@ function Library() {
 
 Motivation for deriving Contexts from other Contexts is already well-established.
 
-Motivation for this approach is that these .map and .apply functions are drawn from the Functor and Applicative Functor (respectively) from Haskell.
+Motivation for this approach is that these `.map` and `.apply` functions are drawn from the Functor and Applicative Functor (respectively) from Haskell.
 This style of approach is thoroughly treaded ground, being used with great success in Haskell for many years.
 
-To briefly describe the purpose of .apply in addition to .map (this explanation is no different from the many articles on Functor vs Applicative out in the wild):
+To briefly describe the purpose of `.apply` in addition to `.map` (this explanation is no different from the many articles on Functor vs Applicative out in the wild):
 
-- With just .map we can refine one Context into any number of others, which can themselves be refined, creating a tree of ever more specific (and less informative) Contexts.
+- With just `.map` we can refine one Context into any number of others, which can themselves be refined, creating a tree of ever more specific (and less informative) Contexts.
 
-- With .apply however, we can merge any number of Contexts into one context.
+- With `.apply` however, we can merge any number of Contexts into one Context.
 Now we can create a DAG, which is so much more expressive than just a tree.
 
 While I believe this interface is more pleasant in both ergonomics, efficiency and theory than wrapping `useContext`,
 what I believe is particularly powerful about it is **its ability to change over time**.
 If some code depends on a Context, that Context can later be rewritten in terms of other Contexts.
-**The consumption is isolated from the production**: the producers can change without necessitating a change in the consumers.
+**The consumption is isolated from the production**: the producers can change without necessitating the consumers read new Contexts.
 
 # Detailed design
 
@@ -85,17 +90,21 @@ There are tradeoffs to choosing any path. Attempt to identify them here.
 
 Unfortunately Applicative Functors are fairly more awkward in JavaScript than they are in Haskell (Haskell curries by default, where JS doesn't).
 
-The Applicative Functor interface could be made available in some other forms:
+The Applicative Functor interface could be made available in some other forms instead:
 
 ## Via liftA2
 
 Instead of a type like `.apply`'s:
 
-> `<T, U>(this: Context<T>, fn: Context<(data: T) => U>): Context<U>`
+```ts
+<T, U>(this: Context<T>, fn: Context<(data: T) => U>): Context<U>
+```
 
 a function called something like `.with` could be exposed:
 
-> `<T, U, R>(this: Context<T>, other: Context<U>, combine: (a: T, b: U) => R): Context<R>`
+```ts
+<T, U, R>(this: Context<T>, other: Context<U>, combine: (a: T, b: U) => R): Context<R>
+```
 
 Note this is the same as `.map`'ing `other` by `combine` into `(data: T) => R`, and similarly `.apply` could be defined in terms of `.with`.
 
@@ -111,11 +120,15 @@ For reference in Haskell `.with` is called `liftA2`.
 
 Promises are also valid Applicative Functors. While .then does have all the power of .apply (and then some), there is a particularly Applicative-y util for Promises: `Promise.all` (_handling of TypeScript tuples omitted for brevity_):
 
-> `<T>(promises: Array<Promise<T>>): Promise<Array<T>>`
+```ts
+<T>(promises: Array<Promise<T>>): Promise<Array<T>>
+```
 
 This pattern is called `sequence` in Haskell. Exposing a function like:
 
-> `<T>(contexts: Array<Context<T>>): Context<Array<T>>`
+```ts
+<T>(contexts: Array<Context<T>>): Context<Array<T>>
+```
 
 would give the same power to users as `.apply`.
 
