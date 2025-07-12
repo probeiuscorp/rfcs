@@ -73,19 +73,33 @@ defined here.
 
 # Drawbacks
 
-Why should we *not* do this? Please consider:
+## Surface area
 
-- implementation cost, both in term of code size and complexity
-- whether the proposed feature can be implemented in user space
-- the impact on teaching people React
-- integration of this feature with other existing and planned features
-- cost of migrating existing React applications (is it a breaking change?)
+Deriving values from multiple Contexts is very possible with custom hooks wrapping `useContext`.
+I believe it is worth the surface area as:
 
-There are tradeoffs to choosing any path. Attempt to identify them here.
+- custom hooks wrapping `useContext` will not be allowed to be called conditionally with `use`.
+- anything wanting to preserve `use` semantics could not `useMemo` to avoid expensive recomputation, where `.map` allows that expensive computation to be lifted out of renders.
+
+I also believe the the surface area is satisfying small, with no extra hooks or exports.
+
+## ReadonlyContext
+
+Contexts derived from other Contexts cannot have `.Provider`'s.
+If derived Contexts had been around from day one of Context, I think distinguishing a `WritableContext` type would be more useful than distinguishing a `ReadonlyContext` (as not many places where the types can't be inferred would need to then provide a Context value).
+I would not think a codemod to rewrite current `Context<T>`'s to `WritableContext<T>` would be worth it.
+
+However, this only affects TypeScript users, and the vast majority of usages won't have explicit type annotations.
+
+## Implementation complexity
+
+TODO: I cannot say how complicated it is, but I would think this to not be overly complicated.
 
 # Alternatives
 
 Unfortunately Applicative Functors are fairly more awkward in JavaScript than they are in Haskell (Haskell curries by default, where JS doesn't).
+
+This feature competes with `useContextSelector`, where giving both as primitives 
 
 The Applicative Functor interface could be made available in some other forms instead:
 
@@ -137,22 +151,20 @@ However, I figured mentioning `Promise` would be useful for precedence.
 
 # Adoption strategy
 
-If we implement this proposal, how will existing React developers adopt it? Is
-this a breaking change? Can we write a codemod? Should we coordinate with
-other projects or libraries?
+A codemod for TypeScript users _could_ be made to convert existing explicit type annotations of `Context<T>`'s to `WritableContext<T>`.
+Beyond that, everything should Just Work.
 
 # How we teach this
 
-What names and terminology work best for these concepts and why? How is this
-idea best presented? As a continuation of existing React patterns?
+These methods could share one docs page, and beyond that would be out of the users way.
+For the users who stumble on it while poking around:
 
-Would the acceptance of this proposal mean the React documentation must be
-re-organized or altered? Does it change how React is taught to new developers
-at any level?
+- `.map` is already a familiar name from Array, and
+- they are completely described by their types (not preserving identity is their only non-pure semantic, and that has strong precedence from Array `.map`).
 
-How should this feature be taught to existing React developers?
+Finding an intuitive name for `.with` would be trickiest part.
 
 # Unresolved questions
 
-Optional, but suggested for first drafts. What parts of the design are still
-TBD?
+- `Context<T>` + `ReadonlyContext<T>` vs `WritableContext<T>` + `Context<T>`
+- Implementation complexity and performance of derivation
