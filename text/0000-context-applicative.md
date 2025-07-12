@@ -21,7 +21,7 @@ To be usable within renders, existing user-land techniques like WeakMap can be u
 
 # Basic example
 
-```js
+```jsx
 // User can set either of these for our API
 const ViewportReadonly = createContext(null);
 const ViewportWritable = createContext(null);
@@ -48,7 +48,7 @@ function Library() {
 
 # Motivation
 
-Motivation for selecting Contexts is already well-established by the popularity of [https://github.com/reactjs/rfcs/pull/119](RFC 119).
+Motivation for selecting Contexts is already well-established by the popularity of [RFC 119](https://github.com/reactjs/rfcs/pull/119).
 
 Motivation for this approach is that these `.map` and `.apply` functions are drawn from the Functor and Applicative Functor (respectively) from Haskell.
 This style of approach is thoroughly treaded ground, being used with great success in Haskell for many years.
@@ -63,7 +63,7 @@ Now we can create a DAG, which is so much more expressive than just a tree.
 While I believe this interface is more pleasant in both ergonomics, efficiency and theory than wrapping `useContext`,
 what I believe is particularly powerful about it is **its ability to change over time**.
 If some code depends on a Context, that Context can later be rewritten in terms of other Contexts.
-**The consumption is isolated from the production**: the producers can change without necessitating the consumers read new Contexts.
+**The consumption is isolated from the production**: the producers can change without necessitating the consumers to read new Contexts.
 
 As an added bonus over wrapping `useContext`, derived Contexts could be used conditionally by `use`.
 
@@ -114,7 +114,7 @@ function SomeComponent() {
 
 The second is that in this snippet, `Child` will never be rerendered (as least by the `useContext`).
 When the map function returns the same as it did for the last push by `Object.is` semantics, the returned Context will not push an update to its subscribers.
-```ts
+```tsx
 const CountContext = createContext(0);
 const ZeroContext = CountContext.map(() => 0);
 
@@ -164,7 +164,7 @@ However, this only affects TypeScript users, and the vast majority of usages won
 
 ## Implementation complexity
 
-TODO: I cannot say how complicated it is, but I would think this to not be overly complicated.
+TODO: I do not know how complex this is. 
 
 # Alternatives
 
@@ -188,7 +188,7 @@ a function called something like `.with` could be exposed:
 <T, U, R>(this: ReadonlyContext<T>, other: ReadonlyContext<U>, combine: (a: T, b: U) => R): ReadonlyContext<R>
 ```
 
-Note this is the same as `.map`'ing `other` by `combine` into `(data: T) => R`, and similarly `.apply` could be defined in terms of `.with`.
+Note this is the same as `.map`'ing `other` by `combine` into `(data: T) => R`. Similarly `.apply` could be defined in terms of `.with`.
 
 **I recommend this approach**.
 I think it would be more natural for JavaScript users, and for the typical use of combining two Contexts, only requires creating the output Context,
@@ -246,12 +246,11 @@ Then its more universal applicability could justify adding this as a solution fo
 No existing APIs are modified so it is opt-in only.
 
 A codemod for TypeScript users _could_ be made to convert existing explicit type annotations of `Context<T>`'s to `WritableContext<T>`.
-Beyond that, everything should Just Work.
 
 # How we teach this
 
-These methods could share one docs page, and beyond that would be out of the users way.
-For the users who stumble on it while poking around:
+These methods could share one docs page, and beyond that would be out of the user's way.
+For the users who stumble upon it while poking around:
 
 - `.map` is already a familiar name from Array, and
 - they are completely described by their types (not preserving identity is their only non-pure semantic, and that has strong precedence from Array `.map`).
@@ -262,4 +261,4 @@ Finding an intuitive name for `.with` would be trickiest part.
 
 - `Context<T>` + `ReadonlyContext<T>` vs `WritableContext<T>` + `Context<T>`
 - Implementation complexity and performance of derivation
-- Could default displayName of derived Contexts from input Context displayName's and the function names.
+- Could default displayName of derived Contexts from input Context displayName's and the function names
