@@ -12,7 +12,7 @@ Following from functional programming techniques, this RFC proposes adding:
 
 and these methods to Context:
 - `.map`, of type: `<T, U>(this: ReadonlyContext<T>, fn: (data: T) => U) => ReadonlyContext<U>`
-- `.apply`, of type: `<T, U>(this: ReadonlyContext<T>, fn: Context<(data: T) => U>) => ReadonlyContext<U>` (_I actually recommend one of its alternatives_)
+- `.apply`, of type: `<T, U>(this: ReadonlyContext<T>, fn: ReadonlyContext<(data: T) => U>) => ReadonlyContext<U>` (_I actually recommend one of its alternatives_)
 
 `.map` allows users to refine and select their Contexts, while `.apply` allows users to combine multiple Contexts together. This is convered in detail in Motivation.
 
@@ -177,13 +177,13 @@ The Applicative Functor interface could be made available in some other forms in
 Instead of a type like `.apply`'s:
 
 ```ts
-<T, U>(this: Context<T>, fn: Context<(data: T) => U>): Context<U>
+<T, U>(this: ReadonlyContext<T>, fn: ReadonlyContext<(data: T) => U>): ReadonlyContext<U>
 ```
 
 a function called something like `.with` could be exposed:
 
 ```ts
-<T, U, R>(this: Context<T>, other: Context<U>, combine: (a: T, b: U) => R): Context<R>
+<T, U, R>(this: ReadonlyContext<T>, other: ReadonlyContext<U>, combine: (a: T, b: U) => R): ReadonlyContext<R>
 ```
 
 Note this is the same as `.map`'ing `other` by `combine` into `(data: T) => R`, and similarly `.apply` could be defined in terms of `.with`.
@@ -207,7 +207,7 @@ Promises are also valid Applicative Functors. While `.then` does have all the po
 This pattern is called `sequence` in Haskell. Exposing a function like:
 
 ```ts
-<T>(contexts: Array<Context<T>>): Context<Array<T>>
+<T>(contexts: Array<ReadonlyContext<T>>): ReadonlyContext<Array<T>>
 ```
 
 would give the same power to users as `.apply`.
