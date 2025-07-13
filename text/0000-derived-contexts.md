@@ -156,7 +156,7 @@ I believe it is worth the surface area as:
 - custom hooks wrapping `useContext` will not be allowed to be called conditionally with `use`.
 - anything wanting to preserve `use` semantics could not `useMemo` to avoid expensive recomputation, where `.map` allows that expensive computation to be lifted out of renders.
 
-I also believe the the surface area is satisfying small, with no extra hooks or exports.
+I also believe the surface area is satisfying small, with no extra hooks or exports.
 
 ## ReadonlyContext
 
@@ -240,7 +240,7 @@ At an API level, this proposal competes with `useContextSelector` the most.
 In those terms, I think derived Contexts are the better first option:
 - `useContextSelector` can be defined in terms of derived Contexts, both in user-land and in React itself
 - Derived contexts greatly increase the expressiveness of Context as a tool of composition, not just for state management
-- No ambiguity about identity ("do I need to useMemo the selector?"): users expect `.map` to change identity
+- No questions about identity ("do I need to useMemo the selector?"): users expect `.map` to change identity
 
 However, at the performance level, derived Contexts might be able to be made performant enough to satisfy `useContextSelector`'s use cases.
 Then the more universal applicability of derived Contexts could justify adding (it as) a solution for those cases.
